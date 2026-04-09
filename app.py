@@ -46,43 +46,36 @@ def check_email(email):
     if not is_valid:
         return {
             "Email": email,
-            "Valid Format": "❌",
-            "Has MX Records": "❌",
-            "Deliverable": "❌"
+            "Valid Format": "No",
+            "Has MX Records": "No",
+            "Deliverable": "No"
         }
 
-    def check_email(email):
-        is_valid = is_valid_email(email)
+    domain = email.split("@")[1]
 
-        if not is_valid:
-            return {
-                "Email": email,
-                "Valid Format": "No",
-                "Has MX Records": "No",
-                "Deliverable": "No"
-            }
+    try:
+        resolver = get_resolver()
+        mx_records = resolver.resolve(domain, "MX")
+        has_mx = len(mx_records) > 0
+    except:
+        has_mx = False
+        mx_records = []
 
-        domain = email.split("@")[1]
+    if has_mx:
+        deliverable = smtp_check(email, mx_records)
+    else:
+        deliverable = "No"
 
-        try:
-            resolver = get_resolver()
-            mx_records = resolver.resolve(domain, "MX")
-            has_mx = len(mx_records) > 0
-        except:
-            has_mx = False
-            mx_records = []
-
-        if has_mx:
-            deliverable = smtp_check(email, mx_records)
-        else:
-            deliverable = "No"
-
-        return {
-            "Email": email,
-            "Valid Format": "Yes",
-            "Has MX Records": "Yes" if has_mx else "No",
-            "Deliverable": deliverable
-        }
+    return {
+        "Email": email,
+        "Valid Format": "Yes",
+        "Has MX Records": "Yes" if has_mx else "No",
+        "Deliverable": {
+            "Yes": "Yes",
+            "No": "No",
+            "Unknown": "Unknown"
+        }.get(deliverable, "Unknown")
+    }
 
 
 # ---------- UI ---------- #
@@ -131,21 +124,7 @@ if option == "Upload CSV":
 
 if results:
     df_results = pd.DataFrame(results)
-
-    # Create display copy with emojis
-    df_display = df_results.copy()
-
-    def format_status(val):
-        return {
-            "Yes": "✅ Yes",
-            "No": "❌ No",
-            "Unknown": "⚠️ Unknown"
-        }.get(val, val)
-
-    for col in ["Valid Format", "Has MX Records", "Deliverable"]:
-        df_display[col] = df_display[col].apply(format_status)
-
-    st.dataframe(df_display)
+    st.dataframe(df_results)
 
     # ---------- DOWNLOAD BUTTON ---------- #
     csv = df_results.to_csv(index=False).encode("utf-8")
@@ -159,7 +138,7 @@ if results:
 
     st.markdown("""
     ### Legend
-    - ✅ Valid / Confirmed
-    - ❌ Invalid / Not Found
-    - ⚠️ Could not verify (timeout / blocked)
+    - Yes Valid / Confirmed
+    - No Invalid / Not Found
+    - Unknown Could not verify (timeout / blocked)
     """)
