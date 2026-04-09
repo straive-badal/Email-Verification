@@ -51,6 +51,17 @@ def check_email(email):
             "Deliverable": "❌"
         }
 
+    def check_email(email):
+    is_valid = is_valid_email(email)
+
+    if not is_valid:
+        return {
+            "Email": email,
+            "Valid Format": "No",
+            "Has MX Records": "No",
+            "Deliverable": "No"
+        }
+
     domain = email.split("@")[1]
 
     try:
@@ -68,13 +79,9 @@ def check_email(email):
 
     return {
         "Email": email,
-        "Valid Format": "✅",
-        "Has MX Records": "✅" if has_mx else "❌",
-        "Deliverable": {
-            "Yes": "✅",
-            "No": "❌",
-            "Unknown": "⚠️"
-        }.get(deliverable, "⚠️")
+        "Valid Format": "Yes",
+        "Has MX Records": "Yes" if has_mx else "No",
+        "Deliverable": deliverable
     }
 
 
@@ -124,7 +131,21 @@ if option == "Upload CSV":
 
 if results:
     df_results = pd.DataFrame(results)
-    st.dataframe(df_results)
+
+    # Create display copy with emojis
+    df_display = df_results.copy()
+
+    def format_status(val):
+        return {
+            "Yes": "✅ Yes",
+            "No": "❌ No",
+            "Unknown": "⚠️ Unknown"
+        }.get(val, val)
+
+    for col in ["Valid Format", "Has MX Records", "Deliverable"]:
+        df_display[col] = df_display[col].apply(format_status)
+
+    st.dataframe(df_display)
 
     # ---------- DOWNLOAD BUTTON ---------- #
     csv = df_results.to_csv(index=False).encode("utf-8")
