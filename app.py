@@ -52,37 +52,37 @@ def check_email(email):
         }
 
     def check_email(email):
-    is_valid = is_valid_email(email)
+        is_valid = is_valid_email(email)
 
-    if not is_valid:
+        if not is_valid:
+            return {
+                "Email": email,
+                "Valid Format": "No",
+                "Has MX Records": "No",
+                "Deliverable": "No"
+            }
+
+        domain = email.split("@")[1]
+
+        try:
+            resolver = get_resolver()
+            mx_records = resolver.resolve(domain, "MX")
+            has_mx = len(mx_records) > 0
+        except:
+            has_mx = False
+            mx_records = []
+
+        if has_mx:
+            deliverable = smtp_check(email, mx_records)
+        else:
+            deliverable = "No"
+
         return {
             "Email": email,
-            "Valid Format": "No",
-            "Has MX Records": "No",
-            "Deliverable": "No"
+            "Valid Format": "Yes",
+            "Has MX Records": "Yes" if has_mx else "No",
+            "Deliverable": deliverable
         }
-
-    domain = email.split("@")[1]
-
-    try:
-        resolver = get_resolver()
-        mx_records = resolver.resolve(domain, "MX")
-        has_mx = len(mx_records) > 0
-    except:
-        has_mx = False
-        mx_records = []
-
-    if has_mx:
-        deliverable = smtp_check(email, mx_records)
-    else:
-        deliverable = "No"
-
-    return {
-        "Email": email,
-        "Valid Format": "Yes",
-        "Has MX Records": "Yes" if has_mx else "No",
-        "Deliverable": deliverable
-    }
 
 
 # ---------- UI ---------- #
