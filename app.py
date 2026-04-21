@@ -235,12 +235,3 @@ if results:
         mime="text/csv"
     )
 
-    st.markdown("""
-    ### Output Columns
-    - **Email**
-    - **Valid Format**
-    - **Has MX Records**
-    - **Deliverable**
-    - **Accept All Domain**
-    - **SMTP Response Code**
-    """)
